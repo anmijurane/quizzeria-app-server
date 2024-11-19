@@ -3,6 +3,7 @@ import { QuestionsService } from './questions.service';
 import { SeedDto } from 'src/common/dto/seed.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UUID } from 'crypto';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @Controller('questions')
 export class QuestionsController {
@@ -15,6 +16,7 @@ export class QuestionsController {
   }
 
   @Get('/:idSubject')
+  @Auth('user')
   getByIdSubject(@Param('idSubject') idSubject: UUID) {
     return this.questionsService.getByIdSubject(idSubject);
   }
