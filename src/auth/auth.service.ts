@@ -12,6 +12,7 @@ import { User } from './entities/user.entity';
 import { LoginUserDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from 'src/common/interfaces/jwt.interface';
+import { TokenVerify } from './interfaces/jwt-type.interface';
 
 @Injectable()
 export class UsersService {
@@ -63,6 +64,27 @@ export class UsersService {
     } catch (error) {
       // TODO: implements control error
       throw new InternalServerErrorException(error);
+    }
+  }
+
+  async checkSession(payload: string) {
+    let resolve: TokenVerify;
+    try {
+      resolve = this.jwtService.verify(payload) as TokenVerify;
+      const user = await this.userRepo.findOne({
+        where: { id: resolve.id },
+      });
+      delete user.password;
+      return {
+        activeSession: true,
+        user,
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        sessionActive: false,
+        user: null,
+      };
     }
   }
 
