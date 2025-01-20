@@ -13,6 +13,11 @@ import { LoginUserDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from 'src/common/interfaces/jwt.interface';
 import { TokenVerify } from './interfaces/jwt-type.interface';
+import {
+  ResourceUnauthorizedException,
+  UnauthorizedExceptionByBadCredencials,
+  UnauthorizedExceptionByUserNotFound,
+} from 'src/common/handles/errors/http';
 
 @Injectable()
 export class UsersService {
@@ -24,7 +29,6 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    console.log('CREATE');
     try {
       const { password, ...user } = createUserDto;
       const userCreated = this.userRepo.create({
@@ -38,8 +42,7 @@ export class UsersService {
         token: this.getJWT({ id: userCreated.id }),
       };
     } catch (error) {
-      // TODO: implements control error
-      throw new InternalServerErrorException(error);
+      throw ResourceUnauthorizedException(error);
     }
   }
 
@@ -47,14 +50,13 @@ export class UsersService {
     try {
       const user = await this.userRepo.findOne({
         where: { email: loginUserDto.email },
-        select: { email: true, password: true, id: true },
       });
       if (!user) {
-        throw new UnauthorizedException();
+        throw UnauthorizedExceptionByUserNotFound();
       }
 
       if (!compareSync(loginUserDto.password, user.password)) {
-        throw new UnauthorizedException();
+        throw UnauthorizedExceptionByBadCredencials();
       }
       delete user.password;
       return {
@@ -63,6 +65,9 @@ export class UsersService {
       };
     } catch (error) {
       // TODO: implements control error
+      if (error.status === 401) {
+        throw new UnauthorizedException(error);
+      }
       throw new InternalServerErrorException(error);
     }
   }
@@ -80,10 +85,10 @@ export class UsersService {
         user,
       };
     } catch (error) {
-      console.error(error);
       return {
         sessionActive: false,
         user: null,
+        ...error,
       };
     }
   }
