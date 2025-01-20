@@ -4,6 +4,8 @@ import {
   Body,
   Get,
   UnauthorizedException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UsersService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,6 +22,7 @@ export class UsersController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   login(@Body() loginUserDto: LoginUserDto) {
     return this.usersService.login(loginUserDto);
   }
